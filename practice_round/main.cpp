@@ -8,6 +8,15 @@ struct Pizza {
   vector<int> ingredients;
 };
 
+int64_t pizzasScore(const vector<Pizza>& pizzas) {
+  unordered_set<int> unique_pizzas;
+  for (const auto& pizza : pizzas) {
+    for (int index : pizza.ingredients) {
+      unique_pizzas.insert(index);
+    }
+  }
+  return unique_pizzas.size() * unique_pizzas.size();
+}
 
 struct PizzaAssignment {
   vector<vector<Pizza>> assignment;
@@ -23,6 +32,8 @@ struct PizzaAssignment {
     }
   }
 
+
+
   int64_t calculateScore(vector<int> num_teams) {
     int64_t score = 0;
     for (const auto& pizzas : assignment) {
@@ -33,17 +44,36 @@ struct PizzaAssignment {
       }
 
       --num_teams[team_size];
-      unordered_set<int> unique_pizzas;
-      for (const auto& pizza : pizzas) {
-        for (int index : pizza.ingredients) {
-          unique_pizzas.insert(index);
-        }
-      }
-      score += unique_pizzas.size() * unique_pizzas.size();
+      score += pizzasScore(pizzas);
     }
     return score;
   }
 };
+
+int64_t randomInRange(int l, int r) {
+  return l + (rand() % (r - l + 1));
+}
+
+void improveBySwapping(PizzaAssignment& pizza_assignment) {
+  // Randomly select 2 pizzas, and consider swapping them.
+  const int A = pizza_assignment.assignment.size();
+  for (int iter = 0; iter < 100000; ++iter) {
+    const int pizzas1 = randomInRange(0, A - 1);
+    const int pizzas2 = randomInRange(0, A - 1);
+    if (pizzas1 != pizzas2) {
+      const int64_t score_before = pizzasScore(pizza_assignment.assignment[pizzas1]) + pizzasScore(pizza_assignment.assignment[pizzas2]);
+      const int a = randomInRange(0, pizza_assignment.assignment[pizzas1].size() - 1);  // index into pizzas1
+      const int b = randomInRange(0, pizza_assignment.assignment[pizzas2].size() - 1);  // index into pizzas2
+      // Try swapping them.
+      swap(pizza_assignment.assignment[pizzas1][a], pizza_assignment.assignment[pizzas2][b]);
+      const int64_t score_after = pizzasScore(pizza_assignment.assignment[pizzas1]) + pizzasScore(pizza_assignment.assignment[pizzas2]);
+      if (score_before > score_after) {
+        // Swap them back.
+        swap(pizza_assignment.assignment[pizzas1][a], pizza_assignment.assignment[pizzas2][b]);
+      }
+    }    
+  }
+}
 
 PizzaAssignment randomStrategy(const vector<Pizza>& pizzas,
                                vector<int> num_teams) {
@@ -112,6 +142,7 @@ int main() {
   }
 
   PizzaAssignment assignment = randomStrategy(pizzas, num_teams);
+  improveBySwapping(assignment);
   // assignment.print();
   cout << assignment.calculateScore(num_teams) << endl;
 }
